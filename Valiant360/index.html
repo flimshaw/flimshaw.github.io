@@ -12,18 +12,99 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 <!DOCTYPE HTML>
 <html lang="en">
 	<head>
-		<title>Valiant 360 Pano Player</title>
+		<title>Valiant360 Panorama Video Player</title>
 		<meta charset="utf-8">
-		<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css" />
-		<link rel="stylesheet" type="text/css" href="css/main.css" />
+		<!-- Latest compiled and minified CSS -->
+		<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
+		<link rel="stylesheet" href="css/valiant360.css" />
+		<link rel="stylesheet" href="css/prism.css" />
+		<link rel="stylesheet" href="css/main.css" />
+
 
 	</head>
 	<body>
 
-		<!--<a href="#" class="fullscreenButton">Fullscreen</a>-->
 		<div class="Valiant360" data-video-src="videos/overpass-2k.mp4"></div>
 
-		<script type="text/javascript" src="src/lib/require.js" data-main="src/main"></script>
+		<div class="container">
+
+			<header>
+				<div class="col-md-6">
+					<h1>Valiant360</h1>
+				</div>
+				<div class="col-md-6">
+					<h2>A full 360 degree panorama video player built in Javascript + WebGL.</h2>
+				</div>
+			</header>
+
+		</div>
+
+		<div class="container">
+
+			<div class="intro row">
+								<div class="col-md-8">
+					<h3>Code Samples:</h3><br />
+					<h4>Example markup:</h4>
+<pre class="html">     <div class="Valiant360" data-video-src="/path/to/video.mp4"></div>
+</pre>
+<h4>Hello World:</h4>
+<pre>
+	<code class="language-javascript">
+	// instantiate script
+	$('.Valiant360').Valiant360();
+	</code>
+</pre>
+<h4>Additional Functions:</h4>
+<pre>
+	<code class="language-javascript">
+	// play
+	$('.Valiant360').Valiant360('play');
+
+	// pause
+	$('.Valiant360').Valiant360('play');
+
+	// load new video file
+	$('.Valiant360').Valiant360('loadVideo', 'path/to/video.mp4');
+	</code>
+</pre>
+					</textarea>
+				</div>
+				<div class="col-md-4">
+					<h3>How's it work?</h3>
+					<img src="images/equirectangular-screenshot.jpg" class="full" />
+					<p>Stitch videos from multiple cameras together to create a single high-res equirectangular video.</p>
+
+					<img src="images/sphere-mapped-screenshot.jpg" class="full" />
+					<p>Import that video as a texture, and map it to a sphere using webGL.</p>
+				</div>
+
+			</div>
+		
+		</div>
+
+		<!-- Latest compiled and minified JavaScript -->
+		<script src="js/jquery-1.7.2.min.js"></script>
+		<script src="js/underscore-min.js"></script>
+		<script src="js/three.min.js"></script>
+		<script src="js/jquery.Valiant360.min.js"></script>
+		<script src="js/prism.js"></script>
+		<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
+
+		<script type="text/javascript">
+			$(document).ready(function() {
+
+				//to html entities;  assume content is in the "content" variable
+				$('pre.html').html(_.escape($('pre').html()));
+
+				$('.Valiant360').Valiant360();
+			});
+
+			//replaces pre content with html entities
+			function pre_entities($matches) {
+				return str_replace($matches[1],htmlentities($matches[1]),$matches[0]);
+			}
+
+		</script>
 
 		<script>
 		  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
