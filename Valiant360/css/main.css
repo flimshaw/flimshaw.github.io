@@ -37,6 +37,15 @@ header h2 {
 	width: 100%;
 }
 
+a:hover {
+	color: #0af;
+	text-decoration: none;
+}
+
+.btn-primary:hover, .btn-primary:focus, .btn-primary:active, .btn-primary.active, .open .dropdown-toggle.btn-primary {
+	background-color: #0af;
+}
+
 h1 {
 	font-size: 6em;
 	margin: 0;
@@ -63,4 +72,16 @@ pre {
 .syntaxhighlighter {
 	padding: 20px 0;
 	border-radius: 5px;
+}
+
+.footer-wrapper {
+	padding: 50px 0 25px 0;
+	color: #eee;
+	background-color: #333;
+	overflow: hidden;
+	text-align: right;
+}
+
+.footer-wrapper a {
+
 }
