@@ -34,6 +34,14 @@ h1 {
 	padding: 0;
 }
 
+h3 {
+	font-size: 2em;
+}
+
+ul {
+	padding: 0 0 0 1.5em;
+}
+
 .Valiant360 {
 	height: 360px;;
 }
