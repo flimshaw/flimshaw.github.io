@@ -76,10 +76,18 @@ pre {
 
 .footer-wrapper {
 	padding: 50px 0 25px 0;
+	margin-top: 100px;
 	color: #eee;
 	background-color: #333;
 	overflow: hidden;
 	text-align: right;
+}
+
+.special-thanks {
+	background-color: #ddd;
+	padding: 10px 25px 10px 25px;
+	border-radius: 10px;
+	margin-top: 50px;
 }
 
 .footer-wrapper a {
