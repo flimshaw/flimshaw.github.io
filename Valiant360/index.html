@@ -17,9 +17,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 		<!-- Latest compiled and minified CSS -->
 		<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
 		<link rel="stylesheet" href="css/valiant360.css" />
-		<link rel="stylesheet" href="css/prism.css" />
 		<link rel="stylesheet" href="css/main.css" />
 
+		<link rel="stylesheet" href="css/shCore.css" />
+		<link rel="stylesheet" href="css/shThemeDefault.css" />
 
 	</head>
 	<body>
@@ -42,34 +43,55 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 		<div class="container">
 
 			<div class="intro row">
-								<div class="col-md-8">
-					<h3>Code Samples:</h3><br />
+					<div class="col-md-8">
+					<button type="button" class="btn btn-primary btn-lg">Download Now v0.1 (14kb) <i class="glyphicon glyphicon-circle-arrow-down"></i>  </button>
+					<h3>Code Samples:</h3>
+
+					<h4>For your header:</h4>
+					<pre class="brush: xml">
+						<!-- required libraries -->
+						<script src="js/jquery-1.7.2.min.js"></script>
+						<script src="js/three.min.js"></script>
+
+						<!-- Valiant360 plugin -->
+						<script src="js/jquery.valiant360.min.js"></script>
+
+						<!-- Valiant360 styles -->
+						<link rel="stylesheet" type="text/css" href="css/valiant360.css" /></pre>
+
 					<h4>Example markup:</h4>
-<pre class="html">     <div class="Valiant360" data-video-src="/path/to/video.mp4"></div>
+<pre class="brush: xml">
+	<!-- Valiant360 player container -->
+	<div class="valiant" data-video-src="/path/to/video.mp4"></div>
 </pre>
-<h4>Hello World:</h4>
-<pre>
-	<code class="language-javascript">
-	// instantiate script
-	$('.Valiant360').Valiant360();
-	</code>
+
+<h4>Starting up:</h4>
+<pre class="brush: js">
+	// instantiate script on your container
+	$('.valiant').Valiant360();
 </pre>
+
 <h4>Additional Functions:</h4>
-<pre>
-	<code class="language-javascript">
+<pre class="brush: js">
 	// play
-	$('.Valiant360').Valiant360('play');
+	$('.valiant').Valiant360('play');
 
 	// pause
-	$('.Valiant360').Valiant360('play');
+	$('.valiant').Valiant360('play');
 
 	// load new video file
-	$('.Valiant360').Valiant360('loadVideo', 'path/to/video.mp4');
-	</code>
+	$('.valiant').Valiant360('loadVideo', 'path/to/video.mp4');
 </pre>
 					</textarea>
 				</div>
 				<div class="col-md-4">
+					<h3>Features</h3>
+					<ul>
+						<li>Full Screen support</li>
+						<li>Hardware accelerated rendering</li>
+						<li>Open source (MIT License)</li>
+						<li>Works in Chrome, Firefox, IE11 and Opera</li>
+					</ul>
 					<h3>How's it work?</h3>
 					<img src="images/equirectangular-screenshot.jpg" class="full" />
 					<p>Stitch videos from multiple cameras together to create a single high-res equirectangular video.</p>
@@ -87,15 +109,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 		<script src="js/underscore-min.js"></script>
 		<script src="js/three.min.js"></script>
 		<script src="js/jquery.valiant360.min.js"></script>
-		<script src="js/prism.js"></script>
+		<script src="js/shCore.js"></script>
+		<script src="js/shBrushJScript.js"></script>
+		<script src="js/shBrushXml.js"></script>
 		<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
 
 		<script type="text/javascript">
 			$(document).ready(function() {
 
 				//to html entities;  assume content is in the "content" variable
-				$('pre.html').html(_.escape($('pre').html()));
+				//$('pre.html').html(_.escape($('pre').html()));
 
+			SyntaxHighlighter.all()
 				$('.Valiant360').Valiant360();
 			});
 

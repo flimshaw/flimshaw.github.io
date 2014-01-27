@@ -37,3 +37,8 @@ pre {
 	padding: 20px inherit;
 	margin-bottom: 30px!important;
 }
+
+.syntaxhighlighter {
+	padding: 20px 0;
+	border-radius: 5px;
+}
