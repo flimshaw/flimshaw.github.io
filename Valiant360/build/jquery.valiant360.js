@@ -1,4 +1,4 @@
-/*! jquery.valiant360 - v0.0.9 - 2014-01-26
+/*! jquery.valiant360 - v0.0.10 - 2014-01-27
  * Copyright (c) 2014 Charlie Hoey <me@charliehoey.com>; Licensed MIT */
 var Detector = {
 
