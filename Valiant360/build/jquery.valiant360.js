@@ -1,4 +1,4 @@
-/*! jquery.valiant360 - v0.0.10 - 2014-01-27
+/*! jquery.valiant360 - v0.2.0 - 2014-02-02
  * Copyright (c) 2014 Charlie Hoey <me@charliehoey.com>; Licensed MIT */
 var Detector = {
 
@@ -82,16 +82,20 @@ three.js r65 or higher
         play: play,  
         stop: pause,
         fullscreen: fullscreen,
-        loadVideo: loadVideo
+        loadVideo: loadVideo,
+        loadPhoto: loadPhoto
     };
 
     var defaults = {
+        clickAndDrag: false,
         fov: 35,
+        hideControls: false,
         lon: 0,
         lat: 0,
         loop: "loop",
         muted: true,
         debug: false,
+        flatProjection: false,
         autoplay: true
     }
 
@@ -110,14 +114,17 @@ three.js r65 or higher
     var camera
       , scene
       , renderer
-      , video
+      , video = false
+      , photo = false
       , texture
       , texture_placeholder
       , self
       , lat
       , lon
       , fov
-      , isFullscreen = false;
+      , isFullscreen = false
+      , mouseDown = false
+      , dragStart = {};
 
     var controls = {};
   
@@ -158,6 +165,11 @@ three.js r65 or higher
         lon = this.options.lon;
         fov = this.options.fov;
 
+        // hide controls if they need to be
+        if(this.options.hideControls) {
+
+        }
+
         // create ThreeJS scene
         scene = new THREE.Scene();
 
@@ -171,13 +183,22 @@ three.js r65 or higher
         renderer.setClearColor( 0xffffff, 1 );
         this.append(renderer.domElement);
 
-        // create off-dom video player
-        video = document.createElement( 'video' );
-        video.loop = this.options.loop;
-        video.muted = this.options.muted;
+        if($(self).attr('data-photo-src')) {
+            photo = document.createElement( 'img' );
+        } else {
+            // create off-dom video player
+            video = document.createElement( 'video' );
+            video.loop = this.options.loop;
+            video.muted = this.options.muted;            
+        }
 
         // create ThreeJS texture and high performance defaults
-        texture = new THREE.Texture( video );
+        if(photo != false) {
+            texture = new THREE.Texture( photo );
+        } else {
+            texture = new THREE.Texture( video ); 
+        }
+        
         texture.generateMipmaps = false;
         texture.minFilter = THREE.LinearFilter;
         texture.magFilter = THREE.LinearFilter;
@@ -188,51 +209,64 @@ three.js r65 or higher
         mesh.scale.x = -1; // mirror the texture, since we're looking from the inside out
         scene.add(mesh);
 
-        // attach video player event listeners
-        video.addEventListener("ended", function(e) {
-            log("video loaded");
-        });
+        if(video != false) {
 
-        // Progress Meter
-        video.addEventListener("progress", function(e) {
-            var percent = null;
-                if (video && video.buffered && video.buffered.length > 0 && video.buffered.end && video.duration) {
-                    percent = video.buffered.end(0) / video.duration;
-                } 
-                // Some browsers (e.g., FF3.6 and Safari 5) cannot calculate target.bufferered.end()
-                // to be anything other than 0. If the byte count is available we use this instead.
-                // Browsers that support the else if do not seem to have the bufferedBytes value and
-                // should skip to there. Tested in Safari 5, Webkit head, FF3.6, Chrome 6, IE 7/8.
-                else if (video && video.bytesTotal != undefined && video.bytesTotal > 0 && video.bufferedBytes != undefined) {
-                    percent = video.bufferedBytes / video.bytesTotal;
+            // attach video player event listeners
+            video.addEventListener("ended", function(e) {
+                log("video loaded");
+            });
+
+            // Progress Meter
+            video.addEventListener("progress", function(e) {
+                var percent = null;
+                    if (video && video.buffered && video.buffered.length > 0 && video.buffered.end && video.duration) {
+                        percent = video.buffered.end(0) / video.duration;
+                    } 
+                    // Some browsers (e.g., FF3.6 and Safari 5) cannot calculate target.bufferered.end()
+                    // to be anything other than 0. If the byte count is available we use this instead.
+                    // Browsers that support the else if do not seem to have the bufferedBytes value and
+                    // should skip to there. Tested in Safari 5, Webkit head, FF3.6, Chrome 6, IE 7/8.
+                    else if (video && video.bytesTotal != undefined && video.bytesTotal > 0 && video.bufferedBytes != undefined) {
+                        percent = video.bufferedBytes / video.bytesTotal;
+                    }
+
+                    var cpct = Math.round(percent * 100);
+                    if(cpct == 100) {
+                        // do something now that we are done
+                    } else {
+                        // do something with this percentage info (cpct)
+                    }
+            });
+
+            // Video Play Listener, fires after video loads
+            video.addEventListener("canplaythrough", function(e) {
+
+                if(self.options.autoplay == true) {
+                    video.play(); 
                 }
+                
+                animate();
+                log("playing");
+            });
 
-                var cpct = Math.round(percent * 100);
-                if(cpct == 100) {
-                    // do something now that we are done
-                } else {
-                    // do something with this percentage info (cpct)
-                }
-        });
+            // set the video src and begin loading
+            video.src = this.attr('data-video-src');            
+        } else if(photo != false) {
+            photo.onload = animate;
+            photo.crossOrigin='anonymous';
+            photo.src = $(self).attr('data-photo-src');
+        }
 
-        // Video Play Listener, fires after video loads
-        video.addEventListener("canplaythrough", function(e) {
-
-            if(self.options.autoplay == true) {
-                video.play(); 
-            }
-            
-            animate();
-            log("playing");
-        });
-
-        // set the video src and begin loading
-        video.src = this.attr('data-video-src');
     }
 
     // create separate webgl layer and scene for drawing onscreen controls
     function createControls(options) {
-         this.append(controlsHTML, true);
+        this.append(controlsHTML, true);
+
+        // hide controls if option is set
+        if(this.options.hideControls) {
+            $(self).find('.controls').hide();
+        }
 
         // wire up controller events to dom elements
         attachControlEvents();
@@ -242,6 +276,8 @@ three.js r65 or higher
 
         document.addEventListener( 'mousemove', onDocumentMouseMove, false );
         document.addEventListener( 'mousewheel', onDocumentMouseWheel, false );
+        document.addEventListener( 'mousedown', onDocumentMouseDown, false);
+        document.addEventListener( 'mouseup', onDocumentMouseUp, false);
         document.addEventListener( 'DOMMouseScroll', onDocumentMouseWheel, false);
 
         // CONTROLS
@@ -263,12 +299,27 @@ three.js r65 or higher
 
         $(self).find(".fullscreenButton").click(function(e) {
             e.preventDefault();
+            var elem = $(self)[0];
             if($(this).hasClass('fa-expand')) {
-                
-                 $(self)[0].webkitRequestFullscreen();
+                if (elem.requestFullscreen) {
+                  elem.requestFullscreen();
+                } else if (elem.msRequestFullscreen) {
+                  elem.msRequestFullscreen();
+                } else if (elem.mozRequestFullScreen) {
+                  elem.mozRequestFullScreen();
+                } else if (elem.webkitRequestFullscreen) {
+                  elem.webkitRequestFullscreen();
+                }
             } else {
-                $(this).removeClass('fa-compress').addClass('fa-expand');
-                document.webkitExitFullscreen();
+                if (elem.requestFullscreen) {
+                  document.exitFullscreen();
+                } else if (elem.msRequestFullscreen) {
+                  document.msExitFullscreen();
+                } else if (elem.mozRequestFullScreen) {
+                  document.mozCancelFullScreen();
+                } else if (elem.webkitRequestFullscreen) {
+                  document.webkitExitFullscreen();
+                }
             }
             
         });
@@ -284,6 +335,16 @@ three.js r65 or higher
             }
         });
 
+        function onDocumentMouseUp( event ) {
+            mouseDown = false;
+        }
+
+        function onDocumentMouseDown( event ) {
+            mouseDown = true;
+            dragStart.x = event.pageX;
+            dragStart.y = event.pageY;
+        }
+
         // attach mouse listeners
         function onDocumentMouseMove( event ) {
             onPointerDownPointerX = event.clientX;
@@ -292,13 +353,24 @@ three.js r65 or higher
             onPointerDownLon = lon;
             onPointerDownLat = lat;
             
-
-            if($(self).find('canvas').is(":hover")) {
-                var x = event.pageX - $(self).find('canvas').offset().left;
-                var y = event.pageY - $(self).find('canvas').offset().top;
-                lon = ( x / $(self).find('canvas').width() ) * 430 - 225
-                lat = ( y / $(self).find('canvas').height() ) * -180 + 90                
+            if(self.options.clickAndDrag) {
+                if(mouseDown) {
+                    var x = event.pageX - dragStart.x;
+                    var y = event.pageY - dragStart.y;
+                    dragStart.x = event.pageX;
+                    dragStart.y = event.pageY;
+                    lon += x;
+                    lat -= y;                 
+                }
+            } else {
+                if($(self).is(":hover")) {
+                    var x = event.pageX - $(self).find('canvas').offset().left;
+                    var y = event.pageY - $(self).find('canvas').offset().top;
+                    lon = ( x / $(self).find('canvas').width() ) * 430 - 225
+                    lat = ( y / $(self).find('canvas').height() ) * -180 + 90                
+                }    
             }
+
             
         }
 
@@ -337,13 +409,11 @@ three.js r65 or higher
                 fov = fovMax;
             }
 
-
-            if($(self).find('canvas').is(":hover")) {
+            if($(self).is(":hover")) {
                 camera.setLens(fov);
                 event.preventDefault();
             }
-            
-
+        
         }        
     }
 
@@ -361,6 +431,10 @@ three.js r65 or higher
             var w = screen.width;
             var h = screen.height;
             isFullscreen = true;
+        }
+
+        if(typeof(document.fullscreenElement) !== "undefined") {
+            isFullscreen =  true;
         }
 
         resizeGL(w, h);
@@ -398,6 +472,10 @@ three.js r65 or higher
         video.src = videoFile;
     }
 
+    function loadPhoto(photoFile) {
+        photo.src = photoFile;
+    }
+
     function animate() {
         // set our animate function to fire next time a frame is ready
         requestAnimationFrame( animate );
@@ -429,9 +507,15 @@ three.js r65 or higher
         camera.lookAt(new THREE.Vector3(cx, cy, cz));
 
         // distortion
-        camera.position.x = - cx;
-        camera.position.y = - cy;
-        camera.position.z = - cz;
+        if(self.options.flatProjection) {
+            camera.position.x = 0;
+            camera.position.y = 0;
+            camera.position.z = 0;
+        } else {
+            camera.position.x = - cx;
+            camera.position.y = - cy;
+            camera.position.z = - cz;            
+        }
 
         renderer.clear();
         renderer.render( scene, camera );
