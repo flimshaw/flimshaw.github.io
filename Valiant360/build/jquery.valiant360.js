@@ -1,4 +1,4 @@
-/*! jquery.valiant360 - v0.2.0 - 2014-06-29
+/*! jquery.valiant360 - v0.2.2 - 2014-07-28
  * Copyright (c) 2014 Charlie Hoey <me@charliehoey.com>; Licensed MIT */
 var Detector = {
 
@@ -56,12 +56,12 @@ var Detector = {
 };
 /*!
  * Valiant360 panorama video player jquery plugin
- * 
+ *
  * Copyright (c) 2014 Charlie Hoey <@flimshaw>
- * 
+ *
  * Released under the MIT license:
  *   http://www.opensource.org/licenses/mit-license.php
- * 
+ *
  * Jquery plugin pattern by @ianjmitchell (http://iainjmitchell.com/blog/?p=360)
  */
 
@@ -72,14 +72,14 @@ three.js r65 or higher
 
 */
 
-// the semi-colon before the function invocation is a safety 
-// net against concatenated scripts and/or other plugins 
+// the semi-colon before the function invocation is a safety
+// net against concatenated scripts and/or other plugins
 // that are not closed properly.
 ;(function() {
- 
-    //define the commands that can be used  
-    var commands = {  
-        play: play,  
+
+    //define the commands that can be used
+    var commands = {
+        play: play,
         stop: pause,
         fullscreen: fullscreen,
         loadVideo: loadVideo,
@@ -102,15 +102,6 @@ three.js r65 or higher
     // store the time of the script start
     var time = new Date().getTime();
 
-    // html for control elements, gets appended to container div on load
-    var controlsHTML = ' \
-        <div class="controls"> \
-            <a href="#" class="playButton button fa fa-pause"></a> \
-            <a href="#" class="muteButton button fa fa-volume-off"></a> \
-            <a href="#" class="fullscreenButton button fa fa-expand"></a> \
-        </div> \
-    ';
-
     var camera
       , scene
       , renderer
@@ -127,21 +118,24 @@ three.js r65 or higher
       , dragStart = {};
 
     var controls = {};
-  
+
+    // html for control elements, gets appended to container div on load
+    var controlsHTML = '';
+
     $.fn.Valiant360 = function() {
 
-        if (typeof arguments[0] === 'string') {  
-           
-            //execute string comand on mediaPlayer  
-            var property = arguments[1];  
-            
-            //remove the command name from the arguments  
-            var args = Array.prototype.slice.call(arguments);  
-            args.splice(0, 1);  
-  
-            commands[arguments[0]].apply(this, args);  
-        }  else {  
-            //create mediaPlayer  
+        if (typeof arguments[0] === 'string') {
+
+            //execute string comand on mediaPlayer
+            var property = arguments[1];
+
+            //remove the command name from the arguments
+            var args = Array.prototype.slice.call(arguments);
+            args.splice(0, 1);
+
+            commands[arguments[0]].apply(this, args);
+        }  else {
+            //create mediaPlayer
             createMediaPlayer.apply(this, arguments);
             createControls.apply(this, arguments);
         }
@@ -152,7 +146,7 @@ three.js r65 or higher
 
         $(self).addClass('Valiant360_default');
 
-        return this;  
+        return this;
     };
 
     function createMediaPlayer(options){
@@ -184,21 +178,17 @@ three.js r65 or higher
         this.append(renderer.domElement);
 
         if($(self).attr('data-photo-src')) {
-            photo = document.createElement( 'img' );
+            texture = THREE.ImageUtils.loadTexture($(self).attr('data-photo-src'));
+            photo = true;
+            animate();
         } else {
             // create off-dom video player
             video = document.createElement( 'video' );
             video.loop = this.options.loop;
-            video.muted = this.options.muted;            
+            video.muted = this.options.muted;
+            texture = new THREE.Texture( video );
         }
 
-        // create ThreeJS texture and high performance defaults
-        if(photo != false) {
-            texture = new THREE.Texture( photo );
-        } else {
-            texture = new THREE.Texture( video ); 
-        }
-        
         texture.generateMipmaps = false;
         texture.minFilter = THREE.LinearFilter;
         texture.magFilter = THREE.LinearFilter;
@@ -209,7 +199,8 @@ three.js r65 or higher
         mesh.scale.x = -1; // mirror the texture, since we're looking from the inside out
         scene.add(mesh);
 
-        if(video != false) {
+        // if we have a video, attach our controls etc
+        if(video) {
 
             // attach video player event listeners
             video.addEventListener("ended", function(e) {
@@ -221,7 +212,7 @@ three.js r65 or higher
                 var percent = null;
                     if (video && video.buffered && video.buffered.length > 0 && video.buffered.end && video.duration) {
                         percent = video.buffered.end(0) / video.duration;
-                    } 
+                    }
                     // Some browsers (e.g., FF3.6 and Safari 5) cannot calculate target.bufferered.end()
                     // to be anything other than 0. If the byte count is available we use this instead.
                     // Browsers that support the else if do not seem to have the bufferedBytes value and
@@ -242,15 +233,15 @@ three.js r65 or higher
             video.addEventListener("canplaythrough", function(e) {
 
                 if(self.options.autoplay == true) {
-                    video.play(); 
+                    video.play();
                 }
-                
+
                 animate();
                 log("playing");
             });
 
             // set the video src and begin loading
-            video.src = this.attr('data-video-src');            
+            video.src = this.attr('data-video-src');
         } else if(photo != false) {
             photo.onload = animate;
             photo.crossOrigin='anonymous';
@@ -261,6 +252,18 @@ three.js r65 or higher
 
     // create separate webgl layer and scene for drawing onscreen controls
     function createControls(options) {
+
+    	var muteControl = self.options.muted ? 'fa-volume-off' : 'fa-volume-up';
+    	var playPauseControl = self.options.autoplay ? 'fa-pause' : 'fa-play';
+
+	    controlsHTML = ' \
+	        <div class="controls"> \
+	            <a href="#" class="playButton button fa '+ playPauseControl +'"></a> \
+	            <a href="#" class="muteButton button fa '+ muteControl +'"></a> \
+	            <a href="#" class="fullscreenButton button fa fa-expand"></a> \
+	        </div> \
+	    ';
+
         this.append(controlsHTML, true);
 
         // hide controls if option is set
@@ -321,7 +324,7 @@ three.js r65 or higher
                   document.webkitExitFullscreen();
                 }
             }
-            
+
         });
 
         $(self).find(".muteButton").click(function(e) {
@@ -352,7 +355,7 @@ three.js r65 or higher
 
             onPointerDownLon = lon;
             onPointerDownLat = lat;
-            
+
             if(self.options.clickAndDrag) {
                 if(mouseDown) {
                     var x = event.pageX - dragStart.x;
@@ -360,21 +363,21 @@ three.js r65 or higher
                     dragStart.x = event.pageX;
                     dragStart.y = event.pageY;
                     lon += x;
-                    lat -= y;                 
+                    lat -= y;
                 }
             } else {
                 if($(self).is(":hover")) {
                     var x = event.pageX - $(self).find('canvas').offset().left;
                     var y = event.pageY - $(self).find('canvas').offset().top;
                     lon = ( x / $(self).find('canvas').width() ) * 430 - 225
-                    lat = ( y / $(self).find('canvas').height() ) * -180 + 90                
-                }    
+                    lat = ( y / $(self).find('canvas').height() ) * -180 + 90
+                }
             }
 
-            
+
         }
 
-        
+
 
         function onDocumentMouseWheel( event ) {
 
@@ -413,8 +416,8 @@ three.js r65 or higher
                 camera.setLens(fov);
                 event.preventDefault();
             }
-        
-        }        
+
+        }
     }
 
     $(window).resize(function() {
@@ -442,20 +445,20 @@ three.js r65 or higher
     function resizeGL(w, h) {
         renderer.setSize(w, h);
         camera.aspect = w / h;
-        camera.updateProjectionMatrix();        
+        camera.updateProjectionMatrix();
     }
 
     $(document).on('webkitfullscreenchange mozfullscreenchange fullscreenchange',fullscreen);
 
-  
-    //Exposed functions  
-    function play() {  
+
+    //Exposed functions
+    function play() {
       //code to play media
       video.play()
-    }  
-  
-    function pause() {  
-      //code to stop media  
+    }
+
+    function pause() {
+      //code to stop media
       video.pause();
     }
 
@@ -471,11 +474,11 @@ three.js r65 or higher
         // set our animate function to fire next time a frame is ready
         requestAnimationFrame( animate );
 
-        if ( video.readyState === video.HAVE_ENOUGH_DATA) {
+        if ( video.readyState === video.HAVE_ENOUGH_DATA && !photo) {
             if(typeof(texture) != "undefined" ) {
                 var ct = new Date().getTime();
                 if(ct - time >= 30) {
-                    texture.needsUpdate = true; 
+                    texture.needsUpdate = true;
                     time = ct;
                 }
             }
@@ -505,7 +508,7 @@ three.js r65 or higher
         } else {
             camera.position.x = - cx;
             camera.position.y = - cy;
-            camera.position.z = - cz;            
+            camera.position.z = - cz;
         }
 
         renderer.clear();
