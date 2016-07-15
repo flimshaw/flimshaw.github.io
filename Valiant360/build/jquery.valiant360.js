@@ -1,6 +1,6 @@
-/*! jquery.valiant360 - v0.3.0 - 2014-09-16
+/*! jquery.valiant360 - v0.4.0 - 2016-07-15
  * http://flimshaw.github.io/Valiant360
- * Copyright (c) 2014 Charlie Hoey <me@charliehoey.com>; Licensed MIT */
+ * Copyright (c) 2016 Charlie Hoey <me@charliehoey.com>; Licensed MIT */
 
 /**
  * @author alteredq / http://alteredqualia.com/
@@ -107,9 +107,13 @@ three.js r65 or higher
 
     // Create the defaults once
     var pluginName = "Valiant360",
+        plugin, // will hold reference to instantiated Plugin
         defaults = {
+            crossOrigin: 'anonymous',
             clickAndDrag: false,
             fov: 35,
+            fovMin: 3,
+            fovMax: 100,
             hideControls: false,
             lon: 0,
             lat: 0,
@@ -152,6 +156,7 @@ three.js r65 or higher
             this._controls = {};
             this._id = this.generateUUID();
 
+            this._requestAnimationId = ''; // used to cancel requestAnimationFrame on destroy
             this._isVideo = false;
             this._isPhoto = false;
             this._isFullscreen = false;
@@ -190,7 +195,8 @@ three.js r65 or higher
             this._scene = new THREE.Scene();
 
             // create ThreeJS camera
-            this._camera = new THREE.PerspectiveCamera( this.options.fov, $(this.element).width() / $(this.element).height(), 0.1, 1000);
+            this._camera = new THREE.PerspectiveCamera(this._fov, $(this.element).width() / $(this.element).height(), 0.1, 1000);
+            this._camera.setLens(this._fov);
 
             // create ThreeJS renderer and append it to our object
             this._renderer = Detector.webgl? new THREE.WebGLRenderer(): new THREE.CanvasRenderer();
@@ -204,11 +210,13 @@ three.js r65 or higher
             // figure out our texturing situation, based on what our source is
             if( $(this.element).attr('data-photo-src') ) {
                 this._isPhoto = true;
+                THREE.ImageUtils.crossOrigin = this.options.crossOrigin;
                 this._texture = THREE.ImageUtils.loadTexture( $(this.element).attr('data-photo-src') );
             } else {
                 this._isVideo = true;
                 // create off-dom video player
                 this._video = document.createElement( 'video' );
+                this._video.setAttribute('crossorigin', this.options.crossOrigin);
                 this._video.style.display = 'none';
                 $(this.element).append( this._video );
                 this._video.loop = this.options.loop;
@@ -226,24 +234,24 @@ three.js r65 or higher
                 // Progress Meter
                 this._video.addEventListener("progress", function() {
                     var percent = null;
-                        if (self._video && self._video.buffered && self._video.buffered.length > 0 && self._video.buffered.end && self._video.duration) {
-                            percent = self._video.buffered.end(0) / self._video.duration;
-                        }
-                        // Some browsers (e.g., FF3.6 and Safari 5) cannot calculate target.bufferered.end()
-                        // to be anything other than 0. If the byte count is available we use this instead.
-                        // Browsers that support the else if do not seem to have the bufferedBytes value and
-                        // should skip to there. Tested in Safari 5, Webkit head, FF3.6, Chrome 6, IE 7/8.
-                        else if (self._video && self._video.bytesTotal !== undefined && self._video.bytesTotal > 0 && self._video.bufferedBytes !== undefined) {
-                            percent = self._video.bufferedBytes / self._video.bytesTotal;
-                        }
+                    if (self._video && self._video.buffered && self._video.buffered.length > 0 && self._video.buffered.end && self._video.duration) {
+                        percent = self._video.buffered.end(0) / self._video.duration;
+                    }
+                    // Some browsers (e.g., FF3.6 and Safari 5) cannot calculate target.bufferered.end()
+                    // to be anything other than 0. If the byte count is available we use this instead.
+                    // Browsers that support the else if do not seem to have the bufferedBytes value and
+                    // should skip to there. Tested in Safari 5, Webkit head, FF3.6, Chrome 6, IE 7/8.
+                    else if (self._video && self._video.bytesTotal !== undefined && self._video.bytesTotal > 0 && self._video.bufferedBytes !== undefined) {
+                        percent = self._video.bufferedBytes / self._video.bytesTotal;
+                    }
 
-                        // Someday we can have a loading animation for videos
-                        var cpct = Math.round(percent * 100);
-                        if(cpct === 100) {
-                            // do something now that we are done
-                        } else {
-                            // do something with this percentage info (cpct)
-                        }
+                    // Someday we can have a loading animation for videos
+                    var cpct = Math.round(percent * 100);
+                    if(cpct === 100) {
+                        // do something now that we are done
+                    } else {
+                        // do something with this percentage info (cpct)
+                    }
                 });
 
                 // Video Play Listener, fires after video loads
@@ -304,10 +312,13 @@ three.js r65 or higher
             var self = this;
 
             this.element.addEventListener( 'mousemove', this.onMouseMove.bind(this), false );
+            this.element.addEventListener( 'touchmove', this.onMouseMove.bind(this), false );
             this.element.addEventListener( 'mousewheel', this.onMouseWheel.bind(this), false );
             this.element.addEventListener( 'DOMMouseScroll', this.onMouseWheel.bind(this), false );
             this.element.addEventListener( 'mousedown', this.onMouseDown.bind(this), false);
+            this.element.addEventListener( 'touchstart', this.onMouseDown.bind(this), false);
             this.element.addEventListener( 'mouseup', this.onMouseUp.bind(this), false);
+            this.element.addEventListener( 'touchend', this.onMouseUp.bind(this), false);
 
             $(document).on('webkitfullscreenchange mozfullscreenchange fullscreenchange',this.fullscreen.bind(this));
 
@@ -332,23 +343,23 @@ three.js r65 or higher
                 var elem = $(self.element)[0];
                 if($(this).hasClass('fa-expand')) {
                     if (elem.requestFullscreen) {
-                      elem.requestFullscreen();
+                        elem.requestFullscreen();
                     } else if (elem.msRequestFullscreen) {
-                      elem.msRequestFullscreen();
+                        elem.msRequestFullscreen();
                     } else if (elem.mozRequestFullScreen) {
-                      elem.mozRequestFullScreen();
+                        elem.mozRequestFullScreen();
                     } else if (elem.webkitRequestFullscreen) {
-                      elem.webkitRequestFullscreen();
+                        elem.webkitRequestFullscreen();
                     }
                 } else {
                     if (elem.requestFullscreen) {
-                      document.exitFullscreen();
+                        document.exitFullscreen();
                     } else if (elem.msRequestFullscreen) {
-                      document.msExitFullscreen();
+                        document.msExitFullscreen();
                     } else if (elem.mozRequestFullScreen) {
-                      document.mozCancelFullScreen();
+                        document.mozCancelFullScreen();
                     } else if (elem.webkitRequestFullscreen) {
-                      document.webkitExitFullscreen();
+                        document.webkitExitFullscreen();
                     }
                 }
             });
@@ -366,7 +377,7 @@ three.js r65 or higher
 
         },
 
-        onMouseMove: function() {
+        onMouseMove: function(event) {
             this._onPointerDownPointerX = event.clientX;
             this._onPointerDownPointerY = -event.clientY;
 
@@ -390,7 +401,7 @@ three.js r65 or higher
                 this._lon = ( x / $(this.element).find('canvas').width() ) * 430 - 225;
                 this._lat = ( y / $(this.element).find('canvas').height() ) * -180 + 90;
             }
-        }, 
+        },
 
         onMouseWheel: function(event) {
 
@@ -407,13 +418,10 @@ three.js r65 or higher
                 this._fov += event.detail * 1.0;
             }
 
-            var fovMin = 3;
-            var fovMax = 100;
-
-            if(this._fov < fovMin) {
-                this._fov = fovMin;
-            } else if(this._fov > fovMax) {
-                this._fov = fovMax;
+            if(this._fov < this.options.fovMin) {
+                this._fov = this.options.fovMin;
+            } else if(this._fov > this.options.fovMax) {
+                this._fov = this.options.fovMax;
             }
 
             this._camera.setLens(this._fov);
@@ -426,14 +434,14 @@ three.js r65 or higher
             this._dragStart.y = event.pageY;
         },
 
-        onMouseUp: function() {
+        onMouseUp: function(event) {
             this._mouseDown = false;
         },
 
         animate: function() {
             // set our animate function to fire next time a frame is ready
-            requestAnimationFrame( this.animate.bind(this) );
-            
+            this._requestAnimationId = requestAnimationFrame( this.animate.bind(this) );
+
             if( this._isVideo ) {
                 if ( this._video.readyState === this._video.HAVE_ENOUGH_DATA) {
                     if(typeof(this._texture) !== "undefined" ) {
@@ -443,9 +451,9 @@ three.js r65 or higher
                             this._time = ct;
                         }
                     }
-                }                
+                }
             }
-            
+
             this.render();
         },
 
@@ -489,7 +497,12 @@ three.js r65 or higher
         loadVideo: function(videoFile) {
             this._video.src = videoFile;
         },
-
+        unloadVideo: function() {
+            // overkill unloading to avoid dreaded video 'pending' bug in Chrome. See https://code.google.com/p/chromium/issues/detail?id=234779
+            this.pause();
+            this._video.src = '';
+            this._video.removeAttribute('src');
+        },
         loadPhoto: function(photoFile) {
             this._texture = THREE.ImageUtils.loadTexture( photoFile );
         },
@@ -518,15 +531,30 @@ three.js r65 or higher
             this._camera.updateProjectionMatrix();
         },
 
+        destroy: function() {
+            window.cancelAnimationFrame(this._requestAnimationId);
+            this._requestAnimationId = '';
+            this._texture.dispose();
+            this._scene.remove(this._mesh);
+            if(this._isVideo) {
+                this.unloadVideo();
+            }
+            $(this._renderer.domElement).remove();
+        }
     };
 
-    // A really lightweight plugin wrapper around the constructor,
-    // preventing against multiple instantiations
     $.fn[pluginName] = function ( options ) {
         return this.each(function () {
-            if (!$.data(this, "plugin_" + pluginName)) {
-                $.data(this, "plugin_" + pluginName,
-                new Plugin( this, options ));
+            if(typeof options === 'object' || !options) {
+                // A really lightweight plugin wrapper around the constructor,
+                // preventing against multiple instantiations
+                this.plugin = new Plugin(this, options);
+                if (!$.data(this, "plugin_" + pluginName)) {
+                    $.data(this, "plugin_" + pluginName, this.plugin);
+                }
+            } else if(this.plugin[options]) {
+                // Allows plugin methods to be called
+                return this.plugin[options].apply(this.plugin, Array.prototype.slice.call(arguments, 1))
             }
         });
     };
