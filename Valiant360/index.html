@@ -38,7 +38,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 				</div>
 				<div class="col-md-4">
 					<div class="download-button">
-						<a href="download/jquery.valiant360_0.3.0.zip" onClick="ga('send', 'event', 'download', '0.3.0');" class="button"><button type="button" class="btn btn-primary btn-lg">Download Now (v0.3.0) <i class="glyphicon glyphicon-circle-arrow-down"></i>  </button></a>
+						<a href="download/jquery.valiant360_0.4.0.zip" onClick="ga('send', 'event', 'download', '0.4.0');" class="button"><button type="button" class="btn btn-primary btn-lg">Download Now (v0.4.0) <i class="glyphicon glyphicon-circle-arrow-down"></i>  </button></a>
 					</div>
 					<div class="nav">
 						<div>
@@ -68,7 +68,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 						<script src="js/jquery.valiant360.min.js"></script>
 
 						<!-- Valiant360 styles -->
-						<link rel="stylesheet" type="text/css" href="css/valiant360.css" /></pre>
+						<link rel="stylesheet" type="text/css" href="css/valiant360.css" />
+					</pre>
 
 					<h4>Example markup:</h4>
 <pre class="brush: xml">
@@ -160,13 +161,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 		<script>
 		  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
 		  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-		  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		  m=s.getElementsByTagName(o);m=m[m.length-1];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
 		  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
 		  ga('create', 'UA-608903-15', 'flimshaw.github.io');
 		  ga('send', 'pageview');
 
-		</script>
 		</script>
 	</body>
 </html>
